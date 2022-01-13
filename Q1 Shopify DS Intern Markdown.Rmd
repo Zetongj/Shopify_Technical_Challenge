@@ -1,0 +1,60 @@
+---
+title: "Q1 Shopify DS Intern Markdown"
+author: "Zetong Jin"
+date: "1/13/2022"
+output:
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(readxl)
+data = read_excel("/Users/thomas/Downloads/2019 Winter Data Science Intern Challenge Data Set.xlsx")
+attach(data)
+mean(order_amount) # wrong answer
+summary(order_amount)
+```
+
+The AOV of $3145.13 comes out directly by calculate the mean value of the order amount which is not correct. By calculating the mean value of the order amount, we did not consider the total items that a customer bought. Thus, this number would be wrong. A better way to evaluate this data is to group by the shop and use the total revenue/total order to get the correct AOV.
+
+# AOV = total Revenue/Total order
+# AOV by each shop
+```{r}
+library(dplyr)
+aov_1 <- data %>% 
+  group_by(shop_id) %>% 
+  summarise(total_revenue = sum(order_amount),
+            total_orders = sum(total_items)) %>% 
+  transmute(aov_1 = total_revenue/total_orders) %>% 
+  ungroup() %>% 
+  summarise(average_ov = mean(aov_1)) #the mean value for each AOV
+aov_1 
+```
+
+#sneaker_price = order_amount/total_items
+#Price for each sneaker
+```{r}
+aov_2 <- data %>%
+  group_by(shop_id) %>%
+  mutate(sneaker_price = order_amount/total_items) %>%
+  summarise(sneaker_price = mean(sneaker_price)) %>%
+  select(shop_id, sneaker_price) %>%
+  arrange(desc(sneaker_price))
+aov_2
+```
+shop no.78 has the most expensive sneaker price (25725) which is not normal
+
+#Exclude shop No.78 (Delete outlier)
+```{r}
+aov_3 <-  data %>% 
+  group_by(shop_id) %>% 
+  filter(shop_id != 78) %>% 
+  summarise(total_revenue = sum(order_amount),
+            total_orders = sum(total_items)) %>% 
+  transmute(aov_3 = total_revenue/total_orders) %>% 
+  ungroup() %>% 
+  summarise(aov_3 = mean(aov_3))
+aov_3
+```
+We get the final AOV for each shop - 152
+With the outlier, the AOV would be 408 and now it appears to decrease a lot.
